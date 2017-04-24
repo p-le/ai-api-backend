@@ -24,6 +24,9 @@ mongoose.connect(db.url, {}, (err) => {
 
 const storage = multer.diskStorage({
   destination: path.resolve(__dirname, 'uploads'),
+  filename(req, file, cb) {
+    cb(null, `${file.originalname}`)
+  }
 })
 const upload =  multer({ storage })
 
@@ -38,23 +41,21 @@ app.use(compression())
   .use(express.static('public'))
 
 app.post('/upload', upload.array('file[]'), async (req, res) => {
-  let files = req.files
-  files.map((file) => {
-    console.log(file)
-    const newFile = new File({
-      filename: file.originalname,
-      uploadedAt: new Date
-    })
-    newFile.save((err) => {
-      if (err) {
-        console.log('error')
-      } else {
-        console.log('aaa')
-      }
-    })
-  })
-  
   try {
+    let files = req.files
+    files.map((file) => {
+      const newFile = new File({
+        filename: file.originalname,
+        uploadedAt: new Date
+      })
+      newFile.save((err, file) => {
+        if (err) {
+          console.log('error')
+        } else {
+          console.log(file.id)
+        }
+      })
+    })
     res.sendStatus(200)
   } catch (err) {
     res.sendStatus(400)
