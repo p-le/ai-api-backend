@@ -56,19 +56,19 @@ app.post('/upload', upload.array('file[]'), async (req, res) => {
           console.log(file.id)
         }
       })
-    })
-
-    PythonShell.run('classifier.py', {
-      scriptPath: path.resolve(__dirname, 'scripts'),
-      args: [
-        path.resolve(__dirname, 'scripts/test_20170421.tsv'),
-        path.resolve(__dirname, 'outputs/pred_test_haha.tsv')
-      ]
-    }, (err) => {
-      if (err) console.log(err)
-      else {
-        console.log('finished')
-      }
+      PythonShell.run('classifier.py', {
+        scriptPath: path.resolve(__dirname, 'scripts'),
+        args: [
+          path.resolve(__dirname, 'scripts/test_20170421.tsv'),
+          path.resolve(__dirname, 'outputs/pred_test_haha.tsv'),
+          path.resolve(__dirname, 'scripts/random_forest_20170415_01.pkl')
+        ]
+      }, (err) => {
+        if (err) console.log(err)
+        else {
+          console.log('finished')
+        }
+      })
     })
     res.sendStatus(200)
   } catch (err) {

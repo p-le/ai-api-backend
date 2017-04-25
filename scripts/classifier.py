@@ -5,10 +5,11 @@ import sys
 import csv
 import re
 
+
 def processing_text(raw):
     data = list()
     for row in raw:
-        priceStr = row[7]
+        priceStr = row[7].replace(",","")
         priceStrip = priceStr.strip()
         if(priceStrip == "" or priceStrip == "無料" or priceStrip == "-" or priceStrip == "—" or "日間無料" in priceStrip or "初月無料" in priceStrip):
             price = 0
@@ -63,7 +64,7 @@ def get_one_hot_encoding():
     one_hot_enc.fit(cate_label)
     return one_hot_enc, label_enc
 
-def processing(input_file, output_file):
+def processing(input_file, model_file, output_file):
     test_data = processing_text(csv.reader(open(input_file, "r"), delimiter="\t", dialect=csv.excel))
     test_processed = list()
     one_hot_enc, label_enc = get_one_hot_encoding()
@@ -78,7 +79,7 @@ def processing(input_file, output_file):
     #print test_processed
 
     from sklearn.externals import joblib
-    model_forest = joblib.load('random_forest_20170415_01.pkl')
+    model_forest = joblib.load(model_file)
     pred_results = list()
     for data in test_processed:
         if model_forest.predict([data[1:]]) == 1:
@@ -107,5 +108,6 @@ def processing(input_file, output_file):
 if __name__ == "__main__":
     input_file  = sys.argv[1]
     output_file = sys.argv[2]
-    print("input file: %s\n-> output file: %s" % (input_file, output_file))
-    processing(input_file, output_file)
+    model_file = sys.argv[3]
+    print("input file: %s, using model: %s, output file: %s" % (input_file, model_file, output_file))
+    processing(input_file, model_file, output_file)
