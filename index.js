@@ -24,7 +24,7 @@ mongoose.connect(db.url, {}, (err) => {
 })
 
 const storage = multer.diskStorage({
-  destination: path.resolve(__dirname, 'uploads'),
+  destination: path.resolve(__dirname, 'inputs'),
   filename(req, file, cb) {
     cb(null, `${file.originalname}`)
   }
@@ -62,7 +62,7 @@ app.post('/upload', upload.array('file[]'), async (req, res) => {
       scriptPath: path.resolve(__dirname, 'scripts'),
       args: [
         path.resolve(__dirname, 'scripts/test_20170421.tsv'),
-        path.resolve(__dirname, 'scripts/pred_test_haha.tsv')
+        path.resolve(__dirname, 'outputs/pred_test_haha.tsv')
       ]
     }, (err) => {
       if (err) console.log(err)
