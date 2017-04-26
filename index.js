@@ -5,13 +5,12 @@ const fs = require('fs')
 const http = require('http')
 const io = require('socket.io')
 const cors = require('cors')
-const event = require('events').EventEmitter();
+const EventEmitter  = require('events');
 const formidable = require('formidable')
 const PythonShell = require('python-shell')
 const bodyParser = require('body-parser')
 const compression = require('compression')
 
-// const whitelist = require('./config/origins')
 const db = require('./config/db')
 const mongoose = require('mongoose')
 const File = require('./models/file')
@@ -23,7 +22,7 @@ const socket = io(server, {
   path: '/process'
 })
 server.listen(PORT, () => console.log(`API is running on ${PORT}`))
-
+const event = new EventEmitter()
 
 mongoose.Promise = global.Promise
 mongoose.connect(db.url, {}, (err) => {
@@ -70,6 +69,7 @@ app.post('/upload', async (req, res) => {
         if (err) console.log(err)
         else {
           results.push(data)
+          console.log(data)
           event.emit('result', JSON.stringify(data))
         }
       })
@@ -83,6 +83,11 @@ app.post('/upload', async (req, res) => {
   Promise
 })
 
-socket.on('connection', function (socket) {
-  console.log(socket)
+socket.on('connection', function (s) {
+  console.log(s.id)
 });
+
+event.on('result', (data) => {
+  console.log(data)
+  socket.emit('result', data.id)
+})
