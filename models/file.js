@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 
 const schema = mongoose.Schema({  
-  filename: String,
+  name: String,
+  size: Number,
   isProcessed: { type: Boolean, default: false },
   uploadedAt: Date
 })

@@ -2,6 +2,7 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const fs = require('fs')
+var mime = require('mime')
 const http = require('http')
 const io = require('socket.io')
 const cors = require('cors')
@@ -38,56 +39,73 @@ app.use(compression())
   .use(bodyParser.urlencoded({ extended: false }))
   .use(express.static('public'))
   .use(cors())
-  
-app.post('/upload', async (req, res) => {
+
+app.get('/result/:id', async (req, res) => {
+  try {
+    const id = req.params.id
+    const file = await File.findById(id)
+    res.setHeader('Content-disposition', 'attachment; filename=' + file.name);
+    const stream = fs.createReadStream(path.resolve(__dirname, `outputs/${id}.${file.name.split('.').pop()}`))
+    stream.pipe(res)
+  } catch (err) {
+    res.status(500).json(err)
+  }
+});
+
+app.post('/upload', (req, res) => {
   const form = new formidable.IncomingForm()
-  const results = []
+  const files = []
   form.uploadDir = path.resolve(__dirname, 'inputs')
   form.keepExtensions = true
   form.multiples = true
   form.parse(req)
 
-  form.on('file', (name, file) => {
+  form.on('fileBegin', (name, file) => {
+    console.log(file)
     const newFile = new File({
-      filename: file.name,
+      name: file.name,
+      size: file.size,
       uploadedAt: new Date
     })
-    newFile.save((err, data) => {
-      if (err) {
-        res.sendStatus(400)
-      }
-      const filename = `${data.id}.${file.name.split('.').pop()}`
-      fs.renameSync(file.path, `${form.uploadDir}/${filename}`)
-      PythonShell.run('classifier.py', {
-        scriptPath: path.resolve(__dirname, 'scripts'),
-        args: [
-          path.resolve(__dirname, `inputs/${filename}`),
-          path.resolve(__dirname, `outputs/${filename}`),
-          path.resolve(__dirname, 'scripts/random_forest_20170415_01.pkl')
-        ]
-      }, (err) => {
-        if (err) console.log(err)
-        else {
-          results.push(data)
-          console.log(data)
-          event.emit('result', JSON.stringify(data))
-        }
-      })
-    })
-
-    form.on('end', () => {
-      res.sendStatus(200)
-    })
+    file.path = `${form.uploadDir}/${newFile._id}.${file.name.split('.').pop()}`
+    files.push(newFile)
   })
-
-  Promise
+  form.on('end', async () => {
+    try {
+      for (let file of files) {
+        await file.save()
+      }
+      event.emit('process', (files))
+      res.status(200).json(files)
+    } catch (err) {
+      res.status(500).json(err)
+    }
+  })
 })
 
 socket.on('connection', function (s) {
   console.log(s.id)
 });
 
-event.on('result', (data) => {
-  console.log(data)
-  socket.emit('result', data.id)
+event.on('process', (files) => {
+  for (let file of files) {
+    PythonShell.run('classifier.py', {
+      scriptPath: path.resolve(__dirname, 'scripts'),
+      args: [
+        path.resolve(__dirname, `inputs/${file._id}.${file.name.split('.').pop()}`),
+        path.resolve(__dirname, `outputs/${file._id}.${file.name.split('.').pop()}`),
+        path.resolve(__dirname, 'scripts/random_forest_20170415_01.pkl')
+      ]
+    }, (err) => {
+      if (err) console.log(err)
+      else {
+        file.isProcessed = true
+        event.emit('result', file)
+      }
+    })
+  }
+})
+
+event.on('result', (file) => {
+  socket.emit('result', JSON.stringify(file))
 })
