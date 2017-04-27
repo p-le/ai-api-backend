@@ -45,7 +45,7 @@ app.get('/result/:id', async (req, res) => {
     const id = req.params.id
     const file = await File.findById(id)
     res.setHeader('Content-disposition', 'attachment; filename=result_' + file.name);
-    const stream = fs.createReadStream(path.resolve(__dirname, `outputs/${id}.${file.name.split('.').pop()}`))
+    const stream = fs.createReadStream(path.resolve(__dirname, `outputs/${id}.${file.name.split('.').pop()}`), 'utf8')
     stream.pipe(res)
   } catch (err) {
     res.status(500).json(err)
