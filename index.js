@@ -2,7 +2,7 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const fs = require('fs')
-var mime = require('mime')
+const mime = require('mime')
 const http = require('http')
 const io = require('socket.io')
 const cors = require('cors')
@@ -44,11 +44,14 @@ app.get('/result/:id', async (req, res) => {
   try {
     const id = req.params.id
     const file = await File.findById(id)
+    const fileDir = `outputs/${id}.${file.name.split('.').pop()}`
+
     res.setHeader('Content-disposition', 'attachment; filename=result_' + file.name);
-    const stream = fs.createReadStream(path.resolve(__dirname, `outputs/${id}.${file.name.split('.').pop()}`), 'utf8')
+    res.setHeader('Content-type', `${mime.lookup(fileDir)}`)
+    const stream = fs.createReadStream(path.resolve(__dirname, fileDir, 'utf8'))
     stream.pipe(res)
   } catch (err) {
-    res.status(500).json(err)
+    res.status(500).json({ error: "Internal Server Error" })
   }
 });
 
