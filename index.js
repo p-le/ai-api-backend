@@ -54,29 +54,37 @@ app.get('/result/:id', async (req, res) => {
 
 app.post('/upload', (req, res) => {
   const form = new formidable.IncomingForm()
-  const files = []
+  const dbFiles = []
   form.uploadDir = path.resolve(__dirname, 'inputs')
   form.keepExtensions = true
   form.multiples = true
   form.parse(req)
 
   form.on('fileBegin', (name, file) => {
-    console.log(file)
     const newFile = new File({
       name: file.name,
       size: file.size,
       uploadedAt: new Date
     })
     file.path = `${form.uploadDir}/${newFile._id}.${file.name.split('.').pop()}`
-    files.push(newFile)
+    dbFiles.push(newFile)
   })
+
+  form.on('file', (name, file) => {
+    for (let f of dbFiles ) {
+      if (file.path.includes(f._id)) {
+        f.size = file.size
+      }
+    }
+  })
+
   form.on('end', async () => {
     try {
-      for (let file of files) {
-        await file.save()
+      for (let f of dbFiles) {
+        await f.save()
       }
-      event.emit('process', (files))
-      res.status(200).json(files)
+      event.emit('process', (dbFiles))
+      res.status(200).json(dbFiles)
     } catch (err) {
       res.status(500).json(err)
     }
@@ -106,6 +114,8 @@ event.on('process', (files) => {
   }
 })
 
-event.on('result', (file) => {
-  socket.emit('result', JSON.stringify(file))
+event.on('result', async (file) => {
+  file.isProcessed = true
+  const updatedFile = await file.save()
+  socket.emit('result', JSON.stringify(updatedFile))
 })
