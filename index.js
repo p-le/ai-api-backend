@@ -52,6 +52,17 @@ app.get('/result/:id', async (req, res) => {
   }
 });
 
+app.get('/history', async (req, res) => {
+  try {
+    const files = await File.find({}).exec()
+    console.log(files)
+    res.status(200).json(files)
+  } catch (err) {
+    console.log(err)
+    res.status(500).json({ error: "Internal Server Error" })
+  }
+})
+
 app.post('/upload', (req, res) => {
   const form = new formidable.IncomingForm()
   const dbFiles = []
@@ -86,7 +97,7 @@ app.post('/upload', (req, res) => {
       event.emit('process', (dbFiles))
       res.status(200).json(dbFiles)
     } catch (err) {
-      res.status(500).json(err)
+      res.status(500).json({ error: ""})
     }
   })
 })
