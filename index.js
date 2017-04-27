@@ -47,8 +47,8 @@ app.get('/result/:id', async (req, res) => {
     const fileDir = `outputs/${id}.${file.name.split('.').pop()}`
 
     res.setHeader('Content-disposition', 'attachment; filename=result_' + file.name);
-    res.setHeader('Content-type', `${mime.lookup(fileDir)}`)
-    const stream = fs.createReadStream(path.resolve(__dirname, fileDir, 'utf8'))
+    res.setHeader('Content-type', `${mime.lookup(fileDir)}; charset=utf-8`)
+    const stream = fs.createReadStream(path.resolve(__dirname, fileDir))
     stream.pipe(res)
   } catch (err) {
     res.status(500).json({ error: "Internal Server Error" })
