@@ -11,6 +11,7 @@ const s3 = new AWS.S3({
 });
 
 module.exports = (timestamp, filename, key) => {
+  logger.info(key)
   return new Promise((resolve, reject) => {
     fs.readFile(filename, (err, data) => {
       if (err) reject(err)
