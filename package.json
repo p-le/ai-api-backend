@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "cross-env NODE_ENV=dev HASH_KEY=netmile node index.js",
+    "dev": "cross-env NODE_ENV=dev node index.js",
     "prod": "NODE_ENV=prod ./node_modules/.bin/pm2 start index.js"
   },
   "engines": {

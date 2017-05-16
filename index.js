@@ -10,6 +10,11 @@ const uploadRouter = require('./routers/upload')
 const healthcheckRouter = require('./routers/healthcheck')
 
 const PORT = process.env.PORT || 2712
+
+if(!process.env.HASH_KEY) {
+  throw(new Error('process.env.HASH_KEY Not Set'))
+}
+
 const app = express()
 const server = http.Server(app)
 
