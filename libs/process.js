@@ -15,9 +15,10 @@ module.exports = (file) => {
       if (err) {
         logger.info(err)
         reject(err)
+      } else {
+        logger.info(`Processed ${file.name}`)
+        resolve('Processed')
       }
-      logger.info(`Processed ${file.name}`)
-      resolve('processed');
     })
   })
 }

@@ -4,10 +4,13 @@ const path = require('path')
 const fs = require('fs')
 const router = express.Router()
 const dateFormat = require('dateformat')
+const logger = require('../libs/logger')
 const processFile = require('../libs/process')
 const uploadS3 = require('../libs/uploadS3')
 
 module.exports = router.post('/upload', (req, res) => {
+  logger.info('Receiving Request')
+
   const form = new formidable.IncomingForm();
   const timestamp = dateFormat(new Date(), "yyyymmdd");
   form.keepExtensions = true
@@ -22,6 +25,15 @@ module.exports = router.post('/upload', (req, res) => {
 
     if (err)  {
       res.sendStatus(400)
+      return
+    }
+
+    if (!files) {
+      logger.info('無効なファイル')
+      res.status(400).send({
+        error: '無効なファイル'
+      })
+      return;
     }
 
     for (let property in files) {
@@ -37,6 +49,7 @@ module.exports = router.post('/upload', (req, res) => {
       res.status(400).send({
         error: 'データフォマット不正'
       })
+      return
     }
 
     try {
@@ -62,6 +75,7 @@ module.exports = router.post('/upload', (req, res) => {
       res.status(500).send({
         error: 'サーバーエラー'
       })
+      return
     }
   })
 })

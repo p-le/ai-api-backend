@@ -2,6 +2,7 @@ const AWS = require('aws-sdk')
 const fs = require('fs')
 const s3Config = require('../config/s3.config')
 const logger = require('./logger')
+
 const s3 = new AWS.S3({
   apiVersion: '2017-05-15',
   params: {
@@ -21,9 +22,10 @@ module.exports = (timestamp, filename, key) => {
         if (err) {
           logger.info(err)
           reject(err)
+        } else {
+          logger.info(result)
+          resolve(result)
         }
-        logger.info(result)
-        resolve(result)
       })
     })
   });

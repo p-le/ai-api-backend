@@ -3,11 +3,13 @@ const formidable = require('formidable')
 const path = require('path')
 const fs = require('fs')
 const router = express.Router()
+const logger = require('../libs/logger')
 const isDigestValid = require('../libs/digest')
 const processFile = require('../libs/process')
 const uploadS3 = require('../libs/uploadS3')
 
 module.exports = router.post('/data', (req, res) => {
+  logger.info('Receiving Request')
   const form = new formidable.IncomingForm();
 
   form.keepExtensions = true
@@ -22,15 +24,28 @@ module.exports = router.post('/data', (req, res) => {
     const sum = fields.sum
     let uploadedFile = null
 
-    if (err || !timestamp || !sum || !files)  {
+    if (err || !timestamp || !sum)  {
+      logger.info('パラメーター不足')
       res.status(400).send({
         error: 'パラメーター不足'
       })
+      return
     }
+
     if (!isDigestValid(timestamp, sum)) {
+      logger.info('ハッシュダイジェスト不正')
       res.status(400).send({
-        error: 'Md5sum不正'
+        error: 'ハッシュダイジェスト不正'
       })
+      return
+    }
+
+    if (!files) {
+      logger.info('無効なファイル')
+      res.status(400).send({
+        error: '無効なファイル'
+      })
+      return
     }
 
     for (let property in files) {
@@ -46,6 +61,7 @@ module.exports = router.post('/data', (req, res) => {
       res.status(400).send({
         error: 'データフォマット不正'
       })
+      return
     }
 
     try {
@@ -54,13 +70,16 @@ module.exports = router.post('/data', (req, res) => {
         path.resolve(__dirname, `../tmp/data/${uploadedFile.name}`),
         `origin/${timestamp}/${uploadedFile.name}`
       )
+
       const s3Result = await uploadS3(
         timestamp, 
         path.resolve(__dirname, `../tmp/results/${uploadedFile.name}`),
         `results/${timestamp}/result_${uploadedFile.name}`
       )
+
       fs.unlinkSync(path.resolve(__dirname, `../tmp/data/${uploadedFile.name}`))
       fs.unlinkSync(path.resolve(__dirname, `../tmp/results/${uploadedFile.name}`))
+
       res.status(200).send({
         origin: s3ResultOrigin.Location,
         result: s3Result.Location
@@ -68,9 +87,11 @@ module.exports = router.post('/data', (req, res) => {
     } catch (err) {
       fs.unlinkSync(path.resolve(__dirname, `../tmp/data/${uploadedFile.name}`))
       fs.unlinkSync(path.resolve(__dirname, `../tmp/results/${uploadedFile.name}`))
+
       res.status(500).send({
         error: 'サーバーエラー'
       })
+      return
     }
   })
 })
