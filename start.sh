@@ -1,2 +1,2 @@
 #!/bin/bash
-yarn install
+cd /ai-api-backend
