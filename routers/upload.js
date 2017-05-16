@@ -28,18 +28,18 @@ module.exports = router.post('/upload', (req, res) => {
       return
     }
 
-    if (!files) {
-      logger.info('無効なファイル')
-      res.status(400).send({
-        error: '無効なファイル'
-      })
-      return;
-    }
-
     for (let property in files) {
       if (files.hasOwnProperty(property)) {
         uploadedFile = files[property]
       }
+    }
+
+    if (!uploadedFile) {
+      logger.info('無効なファイル')
+      res.status(400).send({
+        error: '無効なファイル'
+      })
+      return
     }
 
     try {
